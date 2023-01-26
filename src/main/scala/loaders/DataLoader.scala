@@ -9,10 +9,11 @@ class DataLoader (sparkSession: SparkSession){
     val netherlandsBig: Dataset[Row] = loadNetherlandsBiggerReviews()
     val netherlandsSmall: Dataset[Row] = loadAmsterdamLesserDataset()
     val datafiniti: Dataset[Row] = loadDatafinitiHotelReviews()
+    val usData: Dataset[Row] = loadMassiveUSdata()
 
     /**
      * Netherlands
-     * Review_Date, Hotel_Name, Reviewer_Score, Negative_Review, Positive_Review, Country, Hotel_Address
+     * Review_Date, Hotel_Name, Reviewer_Score, Review, Country, Hotel_Address
      *
      */
 
@@ -39,9 +40,21 @@ class DataLoader (sparkSession: SparkSession){
 
   }
 
-//  def loadMassiveUSdata(): Dataset[Row] ={
-//
-//  }
+  def loadMassiveUSdata(): Dataset[Row] ={
+    val initDF: Dataset[Row] = sparkSession.read.option("header", "true").csv("7282_1.csv")
+
+    val transformedDF: Dataset[Row] = initDF.select(
+      col("`reviews.date`").as("Review_Date"),
+      col("name").as("Hotel_Name"),
+      col("`reviews.rating`").as("Reviewer_Score"),
+      col("`reviews.text`").as("Review"),
+      col("Country"),
+      col("Address").as("Hotel_Address"))
+
+
+
+    transformedDF
+  }
 
   def loadDatafinitiHotelReviews(): Dataset[Row] = {
     val initDF: Dataset[Row] = sparkSession.read.option("header", "true").csv("Datafiniti_Hotel_Reviews.csv")
