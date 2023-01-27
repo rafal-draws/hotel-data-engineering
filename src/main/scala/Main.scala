@@ -1,3 +1,4 @@
+import cleaners.DataCleaner
 import loaders.DataLoader
 import org.apache.spark.sql.SparkSession
 
@@ -10,9 +11,14 @@ object Main {
       .getOrCreate()
 
     val dataLoader: DataLoader = new DataLoader(spark)
-
+    val dataCleaner: DataCleaner = new DataCleaner(spark)
 
     val DF = dataLoader.loadAll().cache()
+    val cleanedDF = dataCleaner.cleanHotelReviews(DF)
+
+
+
+    println(cleanedDF.count())
   }
 
 

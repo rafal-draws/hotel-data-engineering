@@ -20,6 +20,7 @@ class DataLoader (sparkSession: SparkSession){
     val joinedDF = netherlandsBig
       .unionByName(datafiniti, allowMissingColumns = true)
       .unionByName(netherlandsSmall, allowMissingColumns = true)
+      .unionByName(usData, allowMissingColumns = true)
 
 
 
@@ -31,10 +32,11 @@ class DataLoader (sparkSession: SparkSession){
   val transformedDF: Dataset[Row] = initDF.withColumn("Country", split(col("Hotel_Address")," "))
       .withColumn("Country", col("Country")(size(col("Country"))-1))
 
-    //TODO Casting
-
   val finalColumnsDF: Dataset[Row] = transformedDF
     .select("Review_Date", "Hotel_Name", "Reviewer_Score", "Negative_Review", "Positive_Review", "Country", "Hotel_Address")
+    .withColumn("Review", concat(lit("Positive:"), col("Positive_Review"), lit(" Negative:"), col("Negative_Review")))
+    .drop("Negative_Review", "Positive_Review")
+
 
     finalColumnsDF
 
