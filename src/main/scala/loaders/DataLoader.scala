@@ -11,11 +11,6 @@ class DataLoader (sparkSession: SparkSession){
     val datafiniti: Dataset[Row] = loadDatafinitiHotelReviews()
     val usData: Dataset[Row] = loadMassiveUSdata()
 
-    /**
-     * Netherlands
-     * Review_Date, Hotel_Name, Reviewer_Score, Review, Country, Hotel_Address
-     *
-     */
 
     val joinedDF = netherlandsBig
       .unionByName(datafiniti, allowMissingColumns = true)
@@ -68,8 +63,9 @@ class DataLoader (sparkSession: SparkSession){
       col("country").as("Country"),
       col("address").as("Hotel_Address"))
 
+    val finalDF: Dataset[Row] = transformedDF.withColumn("Reviewer_Score", expr("Reviewer_Score * 2"))
 
-    transformedDF
+    finalDF
   }
 
   def loadAmsterdamLesserDataset(): Dataset[Row] = {
