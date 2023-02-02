@@ -1,6 +1,7 @@
 package loaders
 
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 
 class DataLoader (sparkSession: SparkSession){
@@ -24,16 +25,29 @@ class DataLoader (sparkSession: SparkSession){
 
   def loadNetherlandsBiggerReviews(): Dataset[Row] = {
   val initDF: Dataset[Row] = sparkSession.read.option("header", "true").csv("Hotel_Reviews.csv")
-  val transformedDF: Dataset[Row] = initDF.withColumn("Country", split(col("Hotel_Address")," "))
+  val countryDefinedDF: Dataset[Row] = initDF.withColumn("Country", split(col("Hotel_Address")," "))
       .withColumn("Country", col("Country")(size(col("Country"))-1))
 
-  val finalColumnsDF: Dataset[Row] = transformedDF
+
+  val transformedDF: Dataset[Row] = countryDefinedDF
     .select("Review_Date", "Hotel_Name", "Reviewer_Score", "Negative_Review", "Positive_Review", "Country", "Hotel_Address")
     .withColumn("Review", concat(lit("Positive:"), col("Positive_Review"), lit(" Negative:"), col("Negative_Review")))
+
     .drop("Negative_Review", "Positive_Review")
+    .withColumn("Review_Date", regexp_replace(col("Review_Date"), "/"," "))
+    .withColumn("Review_Date", split(col("Review_Date"), " "))
+    .withColumn("Review_Date",
+      concat
+          (col("Review_Date")(2),lit("-"),
+            col("Review_Date")(0),lit("-"),
+            col("Review_Date")(1)
+          )
+    .cast(DataTypes.DateType))
 
 
-    finalColumnsDF
+
+
+    transformedDF
 
   }
 
@@ -47,6 +61,8 @@ class DataLoader (sparkSession: SparkSession){
       col("`reviews.text`").as("Review"),
       col("Country"),
       col("Address").as("Hotel_Address"))
+      .withColumn("Review_Date", split(col("Review_Date"), "T")(0)
+        .cast(DataTypes.DateType))
 
 
 
@@ -63,7 +79,9 @@ class DataLoader (sparkSession: SparkSession){
       col("country").as("Country"),
       col("address").as("Hotel_Address"))
 
-    val finalDF: Dataset[Row] = transformedDF.withColumn("Reviewer_Score", expr("Reviewer_Score * 2"))
+    val finalDF: Dataset[Row] = transformedDF
+      .withColumn("Reviewer_Score", expr("Reviewer_Score * 2"))
+      .withColumn("Review_Date", split(col("Review_Date"), "T")(0).cast(DataTypes.DateType))
 
     finalDF
   }
@@ -74,6 +92,7 @@ class DataLoader (sparkSession: SparkSession){
     val transformed: Dataset[Row] = initDF
       .drop("_c0", "Unnamed: 0")
       .withColumn("Country", lit("Netherlands"))
+
 
     val finalDF: Dataset[Row] = transformed
       .select(
