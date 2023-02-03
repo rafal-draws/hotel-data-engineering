@@ -15,7 +15,7 @@ class DataCleaner (sparkSession: SparkSession){
               col("Reviewer_Score").cast(DataTypes.DoubleType))
       .na.drop(Seq("Reviewer_Score"))
       .na.fill("not disclosed")
-
+        .withColumn("Review_Date", col("Review_Date").cast(DataTypes.DateType))
 
   cleanedDF
   }

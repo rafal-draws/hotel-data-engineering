@@ -71,19 +71,20 @@ class DataLoader (sparkSession: SparkSession){
 
   def loadDatafinitiHotelReviews(): Dataset[Row] = {
     val initDF: Dataset[Row] = sparkSession.read.option("header", "true").csv("Datafiniti_Hotel_Reviews.csv")
+
     val transformedDF: Dataset[Row] = initDF
       .select(col("dateAdded").as("Review_Date"),
       col("name").as("Hotel_Name"),
-      col("`reviews.rating`").as("Reviewer_Score"), //TODO score * 2
+      col("`reviews.rating`").as("Reviewer_Score"),
       col("`reviews.text`").as("Review"),
       col("country").as("Country"),
       col("address").as("Hotel_Address"))
 
-    val finalDF: Dataset[Row] = transformedDF
+    val adjustedScoreCastedDF: Dataset[Row] = transformedDF
       .withColumn("Reviewer_Score", expr("Reviewer_Score * 2"))
       .withColumn("Review_Date", split(col("Review_Date"), "T")(0).cast(DataTypes.DateType))
 
-    finalDF
+    adjustedScoreCastedDF
   }
 
   def loadAmsterdamLesserDataset(): Dataset[Row] = {
