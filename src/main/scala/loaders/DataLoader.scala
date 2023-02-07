@@ -7,13 +7,13 @@ import org.apache.spark.sql.{Dataset, Row, SparkSession}
 class DataLoader (sparkSession: SparkSession){
 
   def loadAll(): Dataset[Row] = {
-    val netherlandsBig: Dataset[Row] = loadNetherlandsBiggerReviews()
+    val europeBig: Dataset[Row] = loadEuropeBigReviews()
     val netherlandsSmall: Dataset[Row] = loadAmsterdamLesserDataset()
     val datafiniti: Dataset[Row] = loadDatafinitiHotelReviews()
     val usData: Dataset[Row] = loadMassiveUSdata()
 
 
-    val joinedDF = netherlandsBig
+    val joinedDF = europeBig
       .unionByName(datafiniti, allowMissingColumns = true)
       .unionByName(netherlandsSmall, allowMissingColumns = true)
       .unionByName(usData, allowMissingColumns = true)
@@ -23,13 +23,16 @@ class DataLoader (sparkSession: SparkSession){
   joinedDF
   }
 
-  def loadNetherlandsBiggerReviews(): Dataset[Row] = {
+  def loadEuropeBigReviews(): Dataset[Row] = {
   val initDF: Dataset[Row] = sparkSession.read.option("header", "true").csv("Hotel_Reviews.csv")
   val countryDefinedDF: Dataset[Row] = initDF.withColumn("Country", split(col("Hotel_Address")," "))
       .withColumn("Country", col("Country")(size(col("Country"))-1))
 
+  val countryDefinedFixUnitedKingdomDF: Dataset[Row] = countryDefinedDF
+    .filter(col("Country").equalTo(lit("Kingdom")))
+    .withColumn("Country", concat(lit("United "), col("Country")))
 
-  val transformedDF: Dataset[Row] = countryDefinedDF
+    val transformedDF: Dataset[Row] = countryDefinedFixUnitedKingdomDF
     .select("Review_Date", "Hotel_Name", "Reviewer_Score", "Negative_Review", "Positive_Review", "Country", "Hotel_Address")
     .withColumn("Review", concat(lit("Positive:"), col("Positive_Review"), lit(" Negative:"), col("Negative_Review")))
 

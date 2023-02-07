@@ -1,7 +1,8 @@
 import analyzers.HotelReviewsAnalyzer
 import cleaners.DataCleaner
 import loaders.DataLoader
-import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
 
 object Main {
 
@@ -19,11 +20,16 @@ object Main {
     val loadedDF = dataLoader.loadAll().cache()
     val cleanedDF = dataCleaner.cleanHotelReviews(loadedDF)
 
+
     val hotelsRangingFrom6to7inReviewerScore: Dataset[Row] = hotelReviewsAnalyzer.bestHotelsInScoreRange(cleanedDF, 6,7)
 
+    val MostUsedWordsUnitedKingdom: Dataset[Row] = hotelReviewsAnalyzer.mostUsedInterestingWordsPerCountry(cleanedDF, "United")
+    val MostUsedWordsUS: Dataset[Row] = hotelReviewsAnalyzer.mostUsedInterestingWordsPerCountry(cleanedDF, "US")
+
+    //    val worstOrBestHotels: Dataset[Row] = hotelReviewsAnalyzer.showWorstHotelPerCountry(cleanedDF, worst = true)
 
 
-    cleanedDF.show()
+    cleanedDF.write.mode(SaveMode.Overwrite).parquet("/output/HotelData")
   }
 
 
